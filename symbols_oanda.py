@@ -1,20 +1,13 @@
-from MetaTrader5 import initialize, shutdown, symbol_info_tick, symbol_info, terminal_info, symbols_get
+from MetaTrader5 import initialize, shutdown, symbol_info_tick, symbol_info, terminal_info
 import openpyxl
 import numpy as np
 from openpyxl.styles import PatternFill
 import re
-import logging
-import time
 
 # Initialize the MetaTrader 5 terminal
 if not initialize():
     print("Initialization has failed")
     shutdown()
-
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, filename='mt5_symbols_log.txt', filemode='w',
-                    format='%(name)s - %(levelname)s - %(message)s')
 
 
 def get_usd_rate(quote_currency):
@@ -50,35 +43,26 @@ def adjust_value_by_digits(value, actual_digits, reference_digits):
 
 
 symbols = [
-    "XAUUSD", "XAGUSD", "EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "USDCHF", "EURGBP",
-    "AUDUSD", "NZDUSD", "USDCAD", "AUDCAD", "AUDJPY", "CADJPY", "CHFJPY", "EURAUD",
-    "EURJPY", "GBPAUD", "NAS100", "US30", "SPX500", "JPN225", "GER40", "XBRUSD",
-    "XTIUSD", "XNGUSD", "BTCUSD", "ETHUSD", "LTCUSD", "XRPUSD", "BCHUSD",
+    "XAUUSD.sml", "XAGUSD", "EURUSD.sml", "GBPUSD.sml", "USDJPY.sml", "GBPJPY.sml", "USDCHF", "EURGBP.sml",
+    "AUDUSD.sml", "NZDUSD", "USDCAD", "AUDCAD", "AUDJPY", "CADJPY", "CHFJPY", "EURAUD",
+    "EURJPY", "GBPAUD", "US100", "US30", "US500", "JP225", "GER30.sml", "UKOIL.sml",
+    "USOIL.sml", "NATGAS", "BTCUSD", "ETHUSD", "LTCUSD", "XRPUSD", "BCHUSD",
     "USDPHP", "USDBRL", "USDTHB"
 ]
 
-symbols_digits = {
-    "EURGBP": 5,  "EURJPY": 3,  "EURCHF": 5,  "EURAUD": 5,  "EURNZD": 5,  "EURCAD": 5,
-    "GBPJPY": 3,  "GBPCHF": 5,  "GBPAUD": 5,  "GBPNZD": 5,  "GBPCAD": 5,  "CHFJPY": 3,
+
+symbols_digits_octa = {
+    "EURGBP.sml": 5,  "EURJPY": 3,  "EURCHF": 5,  "EURAUD": 5,  "EURNZD": 5,  "EURCAD": 5,
+    "GBPJPY.sml": 3,  "GBPCHF": 5,  "GBPAUD": 5,  "GBPNZD": 5,  "GBPCAD": 5,  "CHFJPY": 3,
     "AUDJPY": 3,  "AUDCHF": 5,  "AUDNZD": 5,  "AUDCAD": 5,  "NZDJPY": 3,  "NZDCHF": 5,
     "NZDCAD": 5,  "CADJPY": 3,  "CADCHF": 5,  "USDMXN": 4,  "EURMXN": 4,  "GBPMXN": 4,
     "EURZAR": 5,  "USDZAR": 5,  "GBPZAR": 5,  "ZARJPY": 3,  "USDHKD": 5,  "USDSEK": 5,
-    "USDSGD": 5,  "EURUSD": 5,  "GBPUSD": 5,  "USDJPY": 3,  "USDCHF": 5,  "AUDUSD": 5,
-    "NZDUSD": 5,  "USDCAD": 5,  "XAUUSD": 2,  "XAGUSD": 3,  "NAS100": 1,  "US30": 1,
-    "SPX500": 1,  "JPN225": 0,  "GER40": 1,   "XBRUSD": 2,  "XTIUSD": 2,  "XNGUSD": 3,
+    "USDSGD": 5,  "EURUSD.sml": 5,  "GBPUSD.sml": 5,  "USDJPY.sml": 3,  "USDCHF": 5,  "AUDUSD.sml": 5,
+    "NZDUSD": 5,  "USDCAD": 5,  "XAUUSD.sml": 2,  "XAGUSD": 3,  "US100": 1,  "US30": 1,
+    "US500": 1,  "JP225": 0,  "GER30.sml": 1,   "UKOIL.sml": 2,  "USOIL.sml": 2,  "NATGAS": 3,
     "BTCUSD": 2,  "ETHUSD": 2,  "LTCUSD": 2,  "XRPUSD": 5,  "BCHUSD": 2,
-    "USDPHP": 2,  "USDBRL": 4,  "USDTHB": 3
+    "USDPHP": 2,  "USDBRL": 4,  "USDTHB": 3,
 }
-
-
-# Retrieve all available symbols from MT5
-available_symbols = symbols_get()
-
-# Extract the symbol names into a list
-broker_symbol_names = [symbol.name for symbol in available_symbols]
-
-# Print out the broker symbol names
-print(broker_symbol_names)
 
 
 tick_data = {}
@@ -88,16 +72,7 @@ for symbol in symbols:
     info = symbol_info(symbol)
 
     if not tick or not info:
-        if not tick:
-            logging.error(f"Could not retrieve tick data for {symbol}.")
-        if not info:
-            logging.error(f"Could not retrieve symbol info for {symbol}.")
-        # Attempt to get more detailed information about the symbol
-        symbol_details = symbol_info(symbol)
-        if symbol_details:
-            logging.info(f"Symbol details for {symbol}: {symbol_details}")
-        else:
-            logging.error(f"Symbol details for {symbol} could not be retrieved.")
+        print(f"Could not retrieve tick or info for {symbol}.")
         continue
 
     if tick and info:
@@ -190,7 +165,7 @@ for symbol in symbols:  # We loop through symbols list to make sure all symbols 
     ws.cell(row=row_num, column=6).value = data.get("spread_in_points", "")
     # Adjusting spread_in_points
     actual_digits = data.get("digits", "")
-    reference_digits = symbols_digits.get(symbol, actual_digits)  # default to actual_digits if symbol not found
+    reference_digits = symbols_digits_octa.get(symbol, actual_digits)  # default to actual_digits if symbol not found
     ws.cell(row=row_num, column=7).value = adjust_value_by_digits(data.get("spread_in_points", 0), actual_digits,
                                                                   reference_digits)
 
@@ -245,8 +220,6 @@ filename = f"{valid_filename}_symbols_info.xlsx"
 
 # Save the workbook with the new filename
 wb.save(filename)
-
-logging.info("Script completed")
 
 # Shutdown the connection to MetaTrader 5
 shutdown()

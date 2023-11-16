@@ -80,85 +80,99 @@ broker_symbol_names = [symbol.name for symbol in available_symbols]
 # Print out the broker symbol names
 print(broker_symbol_names)
 
-
 tick_data = {}
 
-for symbol in symbols:
-    tick = symbol_info_tick(symbol)
-    info = symbol_info(symbol)
+# Define the batch size
+batch_size = 10
 
-    if not tick or not info:
-        if not tick:
-            logging.error(f"Could not retrieve tick data for {symbol}.")
-        if not info:
-            logging.error(f"Could not retrieve symbol info for {symbol}.")
-        # Attempt to get more detailed information about the symbol
-        symbol_details = symbol_info(symbol)
-        if symbol_details:
-            logging.info(f"Symbol details for {symbol}: {symbol_details}")
-        else:
-            logging.error(f"Symbol details for {symbol} could not be retrieved.")
-        continue
 
-    if tick and info:
-        # Determine the currency pair or other instrument
-        if symbol[-3:] in ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF']:
-            quote_currency = symbol[-3:]
-        else:
-            quote_currency = info.currency_profit  # or info.currency_margin
+# Function to process symbols in tranches
+def process_symbols_in_tranches(symbols, batch_size):
+    for i in range(0, len(symbols), batch_size):
+        batch_symbols = symbols[i:i + batch_size]
+        for symbol in batch_symbols:
+            tick = symbol_info_tick(symbol)
+            info = symbol_info(symbol)
 
-        usd_rate = get_usd_rate(quote_currency)
+            if not tick or not info:
+                if not tick:
+                    logging.error(f"Could not retrieve tick data for {symbol}.")
+                if not info:
+                    logging.error(f"Could not retrieve symbol info for {symbol}.")
+                # Attempt to get more detailed information about the symbol
+                symbol_details = symbol_info(symbol)
+                if symbol_details:
+                    logging.info(f"Symbol details for {symbol}: {symbol_details}")
+                else:
+                    logging.error(f"Symbol details for {symbol} could not be retrieved.")
+                continue
 
-        if not usd_rate:
-            continue
+            if tick and info:
+                # Determine the currency pair or other instrument
+                if symbol[-3:] in ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF']:
+                    quote_currency = symbol[-3:]
+                else:
+                    quote_currency = info.currency_profit  # or info.currency_margin
 
-        digits = info.digits
-        spread = tick.ask - tick.bid  # This is the raw spread
+                usd_rate = get_usd_rate(quote_currency)
 
-        if digits != 0:
-            spread_in_points = spread * (10 ** digits) # adjust raw spread to points
-        else:
-            spread_in_points = spread  # or any other default value
+                if not usd_rate:
+                    continue
 
-        spread_in_quote = spread  # Use raw spread for calculations
-        spread_in_usd_per_contract = spread_in_quote * usd_rate * info.trade_contract_size
-        spread_in_usd_per_contract = np.round(spread_in_usd_per_contract, 2)
+                digits = info.digits
+                spread = tick.ask - tick.bid  # This is the raw spread
 
-        min_volume = info.volume_min
-        max_volume = info.volume_max
-        limit_volume = info.volume_limit
-        contract_size = info.trade_contract_size
-        margin = info.margin_initial
+                if digits != 0:
+                    spread_in_points = spread * (10 ** digits) # adjust raw spread to points
+                else:
+                    spread_in_points = spread  # or any other default value
 
-        swap_mode = info.swap_mode
-        swap_long = info.swap_long if info.swap_mode != 0 else 0
-        swap_short = info.swap_short if info.swap_mode != 0 else 0
-        limit_volume = info.volume_limit
-        trade_calc_mode = info.trade_calc_mode
-        underlying_lot_amount_usd = tick.bid * contract_size * usd_rate
-        underlying_lot_amount_usd = np.round(underlying_lot_amount_usd, 2)
+                spread_in_quote = spread  # Use raw spread for calculations
+                spread_in_usd_per_contract = spread_in_quote * usd_rate * info.trade_contract_size
+                spread_in_usd_per_contract = np.round(spread_in_usd_per_contract, 2)
 
-        tick_data[symbol] = {
-            "price": tick.ask,
-            "digits": digits,
-            "spread": spread,
-            "spread_in_points": spread_in_points,
-            "contract_size": contract_size,
-            "min_volume": min_volume,
-            "max_volume": max_volume,
-            "limit_volume": limit_volume,
-            "margin": margin,
-            "quote_currency": quote_currency,
-            "usd_rate": usd_rate,
-            "spread_in_usd_per_contract": spread_in_usd_per_contract,
-            "swap_mode": swap_mode,
-            "swap_long": swap_long,
-            "swap_short": swap_short,
-            "type": "",  # Empty by default
-            "commission": "",  # Empty by default
-            "underlying_lot_amount_usd": underlying_lot_amount_usd,
-            "trade_calc_mode": trade_calc_mode
-        }
+                min_volume = info.volume_min
+                max_volume = info.volume_max
+                limit_volume = info.volume_limit
+                contract_size = info.trade_contract_size
+                margin = info.margin_initial
+
+                swap_mode = info.swap_mode
+                swap_long = info.swap_long if info.swap_mode != 0 else 0
+                swap_short = info.swap_short if info.swap_mode != 0 else 0
+                limit_volume = info.volume_limit
+                trade_calc_mode = info.trade_calc_mode
+                underlying_lot_amount_usd = tick.bid * contract_size * usd_rate
+                underlying_lot_amount_usd = np.round(underlying_lot_amount_usd, 2)
+
+                tick_data[symbol] = {
+                    "price": tick.ask,
+                    "digits": digits,
+                    "spread": spread,
+                    "spread_in_points": spread_in_points,
+                    "contract_size": contract_size,
+                    "min_volume": min_volume,
+                    "max_volume": max_volume,
+                    "limit_volume": limit_volume,
+                    "margin": margin,
+                    "quote_currency": quote_currency,
+                    "usd_rate": usd_rate,
+                    "spread_in_usd_per_contract": spread_in_usd_per_contract,
+                    "swap_mode": swap_mode,
+                    "swap_long": swap_long,
+                    "swap_short": swap_short,
+                    "type": "",  # Empty by default
+                    "commission": "",  # Empty by default
+                    "underlying_lot_amount_usd": underlying_lot_amount_usd,
+                    "trade_calc_mode": trade_calc_mode
+                }
+
+    # Pause the script for a short period before processing the next batch
+    time.sleep(1)
+
+
+# Call the function to process symbols in tranches
+process_symbols_in_tranches(symbols, batch_size)
 
 # Create a new workbook and select the active worksheet
 wb = openpyxl.Workbook()
