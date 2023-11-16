@@ -1,10 +1,9 @@
 from MetaTrader5 import initialize, shutdown, symbol_info_tick, symbol_info, terminal_info, symbols_get
 import openpyxl
 import numpy as np
-from openpyxl.styles import PatternFill
 import re
 import logging
-import time
+
 
 # Initialize the MetaTrader 5 terminal
 if not initialize():
@@ -21,9 +20,15 @@ def get_usd_rate(quote_currency):
     if quote_currency == 'USD':
         return 1
     else:
-        usd_tick = symbol_info_tick(f"{quote_currency}USD")
-        if usd_tick:
-            return usd_tick.ask
+        # Try the direct quote first
+        direct_tick = symbol_info_tick(f"{quote_currency}USD")
+        if direct_tick:
+            return direct_tick.ask
+        else:
+            # If the direct quote fails, try the inverse quote
+            inverse_tick = symbol_info_tick(f"USD{quote_currency}")
+            if inverse_tick:
+                return 1 / inverse_tick.bid  # use bid price to convert from USD to the quote currency
     return None
 
 
@@ -116,7 +121,7 @@ for symbol in symbols:
         spread = tick.ask - tick.bid  # This is the raw spread
 
         if digits != 0:
-            spread_in_points = spread * (10 ** digits) # adjust raw spread to points
+            spread_in_points = spread * (10 ** digits)  # adjust raw spread to points
         else:
             spread_in_points = spread  # or any other default value
 
@@ -154,7 +159,6 @@ for symbol in symbols:
             "swap_mode": swap_mode,
             "swap_long": swap_long,
             "swap_short": swap_short,
-            "type": "",  # Empty by default
             "commission": "",  # Empty by default
             "underlying_lot_amount_usd": underlying_lot_amount_usd,
             "trade_calc_mode": trade_calc_mode
@@ -165,7 +169,7 @@ wb = openpyxl.Workbook()
 ws = wb.active
 
 # Write headers to Excel
-headers = ["Symbol", "Type", "Price", "Digits", "Spread", "Spread in Points", "Spread in Octa Points", "Spread in USD",
+headers = ["Symbol", "Price", "Digits", "Spread", "Spread in Points", "Spread in Octa Points", "Spread in USD",
            "Contract Size", "Min Volume", "Max Volume", "Limit Volume", "Margin Buy", "Trade Calculation Mode",
            "Quote Currency", "USD rate", "Commission", "Swap mode", "Swap Long", "Swap Short",
            "Swap Long in Octa Points", "Swap Short in Octa Points", "Underlying lot amount USD",
@@ -174,16 +178,17 @@ headers = ["Symbol", "Type", "Price", "Digits", "Spread", "Spread in Points", "S
 for col_num, header in enumerate(headers, 1):
     ws.cell(row=1, column=col_num).value = header
 
-# Create a yellow fill for background color
-yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-
 # Write data to Excel
 row_num = 2
 for symbol in symbols:  # We loop through symbols list to make sure all symbols are captured
+
+    # Check for symbols where we want an empty row before them
+    if symbol in ["EURUSD", "NAS100", "XBRUSD", "BTCUSD", "USDPHP"]:
+        row_num += 1  # Increment row_num to leave an empty row
+
     data = tick_data.get(symbol, {})  # Use a default empty dictionary if symbol data is missing
 
     ws.cell(row=row_num, column=1).value = symbol
-    ws.cell(row=row_num, column=2).value = data.get("type", "")
     ws.cell(row=row_num, column=3).value = data.get("price", "")
     ws.cell(row=row_num, column=4).value = data.get("digits", "")
     ws.cell(row=row_num, column=5).value = data.get("spread", "")
@@ -214,10 +219,6 @@ for symbol in symbols:  # We loop through symbols list to make sure all symbols 
                                                                    reference_digits)
 
     ws.cell(row=row_num, column=23).value = data.get("underlying_lot_amount_usd", "")
-
-    # Apply the yellow fill to the appropriate cells
-    ws.cell(row=row_num, column=2).fill = yellow_fill  # Type column
-    ws.cell(row=row_num, column=17).fill = yellow_fill  # Commission column
 
     row_num += 1
 

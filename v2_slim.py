@@ -1,7 +1,6 @@
 from MetaTrader5 import initialize, shutdown, symbol_info_tick, symbol_info, terminal_info, symbols_get
 import openpyxl
 import numpy as np
-from openpyxl.styles import PatternFill
 import re
 import logging
 
@@ -130,9 +129,6 @@ for symbol in symbols:
         spread_in_usd_per_contract = spread_in_quote * usd_rate * info.trade_contract_size
         spread_in_usd_per_contract = np.round(spread_in_usd_per_contract, 2)
 
-        min_volume = info.volume_min
-        max_volume = info.volume_max
-        limit_volume = info.volume_limit
         contract_size = info.trade_contract_size
         margin = info.margin_initial
 
@@ -150,9 +146,6 @@ for symbol in symbols:
             "spread": spread,
             "spread_in_points": spread_in_points,
             "contract_size": contract_size,
-            "min_volume": min_volume,
-            "max_volume": max_volume,
-            "limit_volume": limit_volume,
             "margin": margin,
             "quote_currency": quote_currency,
             "usd_rate": usd_rate,
@@ -160,7 +153,6 @@ for symbol in symbols:
             "swap_mode": swap_mode,
             "swap_long": swap_long,
             "swap_short": swap_short,
-            "type": "",  # Empty by default
             "commission": "",  # Empty by default
             "underlying_lot_amount_usd": underlying_lot_amount_usd,
             "trade_calc_mode": trade_calc_mode
@@ -171,59 +163,51 @@ wb = openpyxl.Workbook()
 ws = wb.active
 
 # Write headers to Excel
-headers = ["Symbol", "Type", "Price", "Digits", "Spread", "Spread in Points", "Spread in Octa Points", "Spread in USD",
-           "Contract Size", "Min Volume", "Max Volume", "Limit Volume", "Margin Buy", "Trade Calculation Mode",
-           "Quote Currency", "USD rate", "Commission", "Swap mode", "Swap Long", "Swap Short",
-           "Swap Long in Octa Points", "Swap Short in Octa Points", "Underlying lot amount USD",
-           "IB Commission per lot"]
+headers = ["Symbol", "Price", "Digits", "Spread", "Spread in Points", "Spread in Octa Points", "Spread in USD",
+           "Contract Size", "Margin Buy", "Trade Calculation Mode", "Quote Currency", "USD rate", "Commission",
+           "Swap mode", "Swap Long", "Swap Short", "Swap Long in Octa Points", "Swap Short in Octa Points",
+           "Underlying lot amount USD"]
 
 for col_num, header in enumerate(headers, 1):
     ws.cell(row=1, column=col_num).value = header
 
-# Create a yellow fill for background color
-yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-
 # Write data to Excel
 row_num = 2
 for symbol in symbols:  # We loop through symbols list to make sure all symbols are captured
+
+    # Check for symbols where we want an empty row before them
+    if symbol in ["EURUSD", "NAS100", "XBRUSD", "BTCUSD", "USDPHP"]:
+        row_num += 1  # Increment row_num to leave an empty row
+
     data = tick_data.get(symbol, {})  # Use a default empty dictionary if symbol data is missing
 
     ws.cell(row=row_num, column=1).value = symbol
-    ws.cell(row=row_num, column=2).value = data.get("type", "")
-    ws.cell(row=row_num, column=3).value = data.get("price", "")
-    ws.cell(row=row_num, column=4).value = data.get("digits", "")
-    ws.cell(row=row_num, column=5).value = data.get("spread", "")
-    ws.cell(row=row_num, column=6).value = data.get("spread_in_points", "")
+    ws.cell(row=row_num, column=2).value = data.get("price", "")
+    ws.cell(row=row_num, column=3).value = data.get("digits", "")
+    ws.cell(row=row_num, column=4).value = data.get("spread", "")
+    ws.cell(row=row_num, column=5).value = data.get("spread_in_points", "")
     # Adjusting spread_in_points
     actual_digits = data.get("digits", "")
     reference_digits = symbols_digits.get(symbol, actual_digits)  # default to actual_digits if symbol not found
-    ws.cell(row=row_num, column=7).value = adjust_value_by_digits(data.get("spread_in_points", 0), actual_digits,
+    ws.cell(row=row_num, column=6).value = adjust_value_by_digits(data.get("spread_in_points", 0), actual_digits,
                                                                   reference_digits)
-
-    ws.cell(row=row_num, column=8).value = data.get("spread_in_usd_per_contract", "")
-    ws.cell(row=row_num, column=9).value = data.get("contract_size", "")
-    ws.cell(row=row_num, column=10).value = data.get("min_volume", "")
-    ws.cell(row=row_num, column=11).value = data.get("max_volume", "")
-    ws.cell(row=row_num, column=12).value = data.get("limit_volume", "")
-    ws.cell(row=row_num, column=13).value = data.get("margin", "")
-    ws.cell(row=row_num, column=14).value = data.get("trade_calc_mode", "")
-    ws.cell(row=row_num, column=15).value = data.get("quote_currency", "")
-    ws.cell(row=row_num, column=16).value = data.get("usd_rate", "")
-    ws.cell(row=row_num, column=17).value = data.get("commission", "")
-    ws.cell(row=row_num, column=18).value = data.get("swap_mode", "")
-    ws.cell(row=row_num, column=19).value = data.get("swap_long", "")
-    ws.cell(row=row_num, column=20).value = data.get("swap_short", "")
+    ws.cell(row=row_num, column=7).value = data.get("spread_in_usd_per_contract", "")
+    ws.cell(row=row_num, column=8).value = data.get("contract_size", "")
+    ws.cell(row=row_num, column=9).value = data.get("margin", "")
+    ws.cell(row=row_num, column=10).value = data.get("trade_calc_mode", "")
+    ws.cell(row=row_num, column=11).value = data.get("quote_currency", "")
+    ws.cell(row=row_num, column=12).value = data.get("usd_rate", "")
+    ws.cell(row=row_num, column=13).value = data.get("commission", "")
+    ws.cell(row=row_num, column=14).value = data.get("swap_mode", "")
+    ws.cell(row=row_num, column=15).value = data.get("swap_long", "")
+    ws.cell(row=row_num, column=16).value = data.get("swap_short", "")
     # Adjusting swap values
-    ws.cell(row=row_num, column=21).value = adjust_value_by_digits(data.get("swap_long", 0), actual_digits,
+    ws.cell(row=row_num, column=17).value = adjust_value_by_digits(data.get("swap_long", 0), actual_digits,
                                                                    reference_digits)
-    ws.cell(row=row_num, column=22).value = adjust_value_by_digits(data.get("swap_short", 0), actual_digits,
+    ws.cell(row=row_num, column=18).value = adjust_value_by_digits(data.get("swap_short", 0), actual_digits,
                                                                    reference_digits)
 
-    ws.cell(row=row_num, column=23).value = data.get("underlying_lot_amount_usd", "")
-
-    # Apply the yellow fill to the appropriate cells
-    ws.cell(row=row_num, column=2).fill = yellow_fill  # Type column
-    ws.cell(row=row_num, column=17).fill = yellow_fill  # Commission column
+    ws.cell(row=row_num, column=19).value = data.get("underlying_lot_amount_usd", "")
 
     row_num += 1
 
