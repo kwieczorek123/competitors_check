@@ -25,10 +25,16 @@ print(broker_name)
 if broker_name.lower() == 'oanda metatrader 5':
     symbols = mappings.symbols_oanda
     symbols_digits = mappings.symbols_digits_oanda
-elif broker_name.lower() == 'avatrade':
+elif broker_name.lower() == 'ava trade mt5 terminal':
     symbols = mappings.symbols_avatrade
     symbols_digits = mappings.symbols_digits_avatrade
-# Add more elif statements for other brokers
+elif broker_name.lower() == 'mt5 by forex.com terminal':
+    symbols = mappings.symbols_forexcom
+    symbols_digits = mappings.symbols_digits_forexcom
+elif broker_name.lower() == 'metatrader 5 ic markets (sc)':
+    symbols = mappings.symbols_icmarkets
+    symbols_digits = mappings.symbols_digits_icmarkets
+
 else:
     symbols = mappings.symbols  # Default mappings
     symbols_digits = mappings.symbols_digits
@@ -160,6 +166,13 @@ for symbol in symbols:
         swap_mode = info.swap_mode
         swap_long = info.swap_long if info.swap_mode != 0 else 0
         swap_short = info.swap_short if info.swap_mode != 0 else 0
+
+        # Calculate swap long/short in points per day
+        if swap_mode in [5, 6]:
+            # New formula for swap mode 5 or 6
+            swap_long = np.round((swap_long/100 * tick.ask) / 365 * (10 ** digits), 2)
+            swap_short = np.round((swap_short/100 * tick.bid) / 365 * (10 ** digits), 2)
+
         limit_volume = info.volume_limit
         trade_calc_mode = info.trade_calc_mode
         underlying_lot_amount_usd = tick.bid * contract_size * usd_rate
