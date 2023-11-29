@@ -34,19 +34,45 @@ else:
     symbols_digits = mappings.symbols_digits
 
 
-def get_usd_rate(quote_currency):
-    if quote_currency == 'USD':
+def get_profit_currency(symbol):
+    # Retrieve symbol info
+    info = symbol_info(symbol)
+    if info:
+        return info.currency_profit
+    return None
+
+
+def find_matching_symbol(currency, symbols_list):
+    # Find a symbol in the list that pairs the currency with USD
+    for sym in symbols_list:
+        if currency + 'USD' in sym or 'USD' + currency in sym:
+            return sym
+    return None
+
+
+def get_usd_rate(symbol, symbols_list):
+    profit_currency = get_profit_currency(symbol)
+    print(f"Profit Currency for {symbol}: {profit_currency}")  # Debug print
+
+    if profit_currency == 'USD':
         return 1
-    else:
-        # Try the direct quote first
-        direct_tick = symbol_info_tick(f"{quote_currency}USD")
-        if direct_tick:
-            return direct_tick.ask
-        else:
-            # If the direct quote fails, try the inverse quote
-            inverse_tick = symbol_info_tick(f"USD{quote_currency}")
-            if inverse_tick:
-                return 1 / inverse_tick.bid  # use bid price to convert from USD to the quote currency
+
+    matched_symbol = find_matching_symbol(profit_currency, symbols_list)
+    print(f"Matched Symbol for {symbol}: {matched_symbol}")  # Debug print
+
+    if matched_symbol:
+        tick = symbol_info_tick(matched_symbol)
+        print(f"Tick data for {matched_symbol}: Bid = {tick.bid}, Ask = {tick.ask}")  # Debug print
+
+        if tick:
+            if matched_symbol.startswith('USD'):
+                usd_rate = 1 / tick.bid
+            else:
+                usd_rate = tick.ask
+
+            print(f"USD Rate for {symbol}: {usd_rate}")  # Debug print
+            return usd_rate
+
     return None
 
 
@@ -108,7 +134,7 @@ for symbol in symbols:
         else:
             quote_currency = info.currency_profit  # or info.currency_margin
 
-        usd_rate = get_usd_rate(quote_currency)
+        usd_rate = get_usd_rate(symbol, symbols)
 
         if not usd_rate:
             continue
@@ -177,10 +203,6 @@ for col_num, header in enumerate(headers, 1):
 # Write data to Excel
 row_num = 2
 for symbol in symbols:  # We loop through symbols list to make sure all symbols are captured
-
-    # Check for symbols where we want an empty row before them
-    if symbol in ["EURUSD", "USDMXN", "NAS100", "XTIUSD", "BTCUSD"]:
-        row_num += 1  # Increment row_num to leave an empty row
 
     data = tick_data.get(symbol, {})  # Use a default empty dictionary if symbol data is missing
 

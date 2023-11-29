@@ -1,9 +1,9 @@
 from MetaTrader5 import initialize, shutdown, symbol_info_tick, symbol_info, terminal_info, symbols_get
 import openpyxl
 import numpy as np
+from openpyxl.styles import PatternFill
 import re
 import logging
-import mappings
 
 
 # Initialize the MetaTrader 5 terminal
@@ -15,23 +15,6 @@ if not initialize():
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, filename='mt5_symbols_log.txt', filemode='w',
                     format='%(name)s - %(levelname)s - %(message)s')
-
-# Retrieve broker's name from MT5 terminal info
-broker_info = terminal_info()
-broker_name = broker_info.name
-print(broker_name)
-
-# Select the appropriate mappings based on the broker's name
-if broker_name.lower() == 'oanda metatrader 5':
-    symbols = mappings.symbols_oanda
-    symbols_digits = mappings.symbols_digits_oanda
-elif broker_name.lower() == 'avatrade':
-    symbols = mappings.symbols_avatrade
-    symbols_digits = mappings.symbols_digits_avatrade
-# Add more elif statements for other brokers
-else:
-    symbols = mappings.symbols  # Default mappings
-    symbols_digits = mappings.symbols_digits
 
 
 def get_usd_rate(quote_currency):
@@ -70,6 +53,26 @@ def adjust_value_by_digits(value, actual_digits, reference_digits):
         return value / factor
     else:
         return value
+
+
+symbols = [
+    "XAUUSD.sml", "XAGUSD", "EURUSD.sml", "GBPUSD.sml", "USDJPY.sml", "GBPJPY.sml", "USDCHF", "EURGBP.sml",
+    "AUDUSD.sml", "NZDUSD", "USDCAD", "AUDCAD", "AUDJPY", "CADJPY", "CHFJPY", "EURAUD",
+    "EURJPY", "GBPAUD", "US100", "US30", "US500", "JP225", "GER30.sml", "UKOIL.sml",
+    "USOIL.sml", "NATGAS", "BTCUSD", "ETHUSD", "LTCUSD", "XRPUSD", "BCHUSD"
+]
+
+symbols_digits = {
+    "EURGBP.sml": 5,  "EURJPY": 3,  "EURCHF": 5,  "EURAUD": 5,  "EURNZD": 5,  "EURCAD": 5,
+    "GBPJPY.sml": 3,  "GBPCHF": 5,  "GBPAUD": 5,  "GBPNZD": 5,  "GBPCAD": 5,  "CHFJPY": 3,
+    "AUDJPY": 3,  "AUDCHF": 5,  "AUDNZD": 5,  "AUDCAD": 5,  "NZDJPY": 3,  "NZDCHF": 5,
+    "NZDCAD": 5,  "CADJPY": 3,  "CADCHF": 5,  "USDMXN": 4,  "EURMXN": 4,  "GBPMXN": 4,
+    "EURZAR": 5,  "USDZAR": 5,  "GBPZAR": 5,  "ZARJPY": 3,  "USDHKD": 5,  "USDSEK": 5,
+    "USDSGD": 5,  "EURUSD.sml": 5,  "GBPUSD.sml": 5,  "USDJPY.sml": 3,  "USDCHF": 5,  "AUDUSD.sml": 5,
+    "NZDUSD": 5,  "USDCAD": 5,  "XAUUSD.sml": 2,  "XAGUSD": 3,  "US100": 1,  "US30": 1,
+    "US500": 1,  "JP225": 0,  "GER30.sml": 1,   "UKOIL.sml": 2,  "USOIL.sml": 2,  "NATGAS": 3,
+    "BTCUSD": 2,  "ETHUSD": 2,  "LTCUSD": 2,  "XRPUSD": 5,  "BCHUSD": 2
+}
 
 
 # Retrieve all available symbols from MT5
@@ -155,6 +158,7 @@ for symbol in symbols:
             "swap_mode": swap_mode,
             "swap_long": swap_long,
             "swap_short": swap_short,
+            "type": "",  # Empty by default
             "commission": "",  # Empty by default
             "underlying_lot_amount_usd": underlying_lot_amount_usd,
             "trade_calc_mode": trade_calc_mode
@@ -174,14 +178,12 @@ headers = ["Symbol", "Type", "Price", "Digits", "Spread", "Spread in Points", "S
 for col_num, header in enumerate(headers, 1):
     ws.cell(row=1, column=col_num).value = header
 
+# Create a yellow fill for background color
+yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+
 # Write data to Excel
 row_num = 2
 for symbol in symbols:  # We loop through symbols list to make sure all symbols are captured
-
-    # Check for symbols where we want an empty row before them
-    if symbol in ["EURUSD", "USDMXN", "NAS100", "XTIUSD", "BTCUSD"]:
-        row_num += 1  # Increment row_num to leave an empty row
-
     data = tick_data.get(symbol, {})  # Use a default empty dictionary if symbol data is missing
 
     ws.cell(row=row_num, column=1).value = symbol
@@ -216,7 +218,10 @@ for symbol in symbols:  # We loop through symbols list to make sure all symbols 
                                                                    reference_digits)
 
     ws.cell(row=row_num, column=23).value = data.get("underlying_lot_amount_usd", "")
-    ws.cell(row=row_num, column=24).value = data.get("ib_commission_per_lot", "")
+
+    # Apply the yellow fill to the appropriate cells
+    ws.cell(row=row_num, column=2).fill = yellow_fill  # Type column
+    ws.cell(row=row_num, column=17).fill = yellow_fill  # Commission column
 
     row_num += 1
 
@@ -231,6 +236,10 @@ for column in ws.columns:
             pass
     adjusted_width = (max_length + 2)  # adding a little extra space
     ws.column_dimensions[column[0].column_letter].width = adjusted_width
+
+# Retrieve broker's name from MT5 terminal info
+broker_info = terminal_info()
+broker_name = broker_info.name
 
 # Sanitize the broker's name to ensure it's a valid filename (remove any invalid characters)
 valid_filename = re.sub(r'[\\/*?:"<>|]',"", broker_name)
