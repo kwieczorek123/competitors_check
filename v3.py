@@ -34,6 +34,21 @@ elif broker_name.lower() == 'mt5 by forex.com terminal':
 elif broker_name.lower() == 'metatrader 5 ic markets (sc)':
     symbols = mappings.symbols_icmarkets
     symbols_digits = mappings.symbols_digits_icmarkets
+elif broker_name.lower() == 'metatrader 5 terminal':
+    symbols = mappings.symbols_deriv
+    symbols_digits = mappings.symbols_digits_deriv
+elif broker_name.lower() == 'metatrader 5 exness':
+    symbols = mappings.symbols_exness
+    symbols_digits = mappings.symbols_digits_exness
+elif broker_name.lower() == 'fbs metatrader 5':
+    symbols = mappings.symbols_fbs
+    symbols_digits = mappings.symbols_digits_fbs
+elif broker_name.lower() == 'xm global mt5':
+    symbols = mappings.symbols_xm
+    symbols_digits = mappings.symbols_digits_xm
+elif broker_name.lower() == 'fxpro - metatrader 5':
+    symbols = mappings.symbols_fxpro
+    symbols_digits = mappings.symbols_digits_fxpro
 
 else:
     symbols = mappings.symbols  # Default mappings
@@ -58,25 +73,20 @@ def find_matching_symbol(currency, symbols_list):
 
 def get_usd_rate(symbol, symbols_list):
     profit_currency = get_profit_currency(symbol)
-    print(f"Profit Currency for {symbol}: {profit_currency}")  # Debug print
 
     if profit_currency == 'USD':
         return 1
 
     matched_symbol = find_matching_symbol(profit_currency, symbols_list)
-    print(f"Matched Symbol for {symbol}: {matched_symbol}")  # Debug print
 
     if matched_symbol:
         tick = symbol_info_tick(matched_symbol)
-        print(f"Tick data for {matched_symbol}: Bid = {tick.bid}, Ask = {tick.ask}")  # Debug print
 
         if tick:
             if matched_symbol.startswith('USD'):
                 usd_rate = 1 / tick.bid
             else:
                 usd_rate = tick.ask
-
-            print(f"USD Rate for {symbol}: {usd_rate}")  # Debug print
             return usd_rate
 
     return None
@@ -228,7 +238,7 @@ for symbol in symbols:  # We loop through symbols list to make sure all symbols 
     # Adjusting spread_in_points
     actual_digits = data.get("digits", "")
     reference_digits = symbols_digits.get(symbol, actual_digits)  # default to actual_digits if symbol not found
-    ws.cell(row=row_num, column=7).value = adjust_value_by_digits(data.get("spread_in_points", 0), actual_digits,
+    ws.cell(row=row_num, column=7).value = adjust_value_by_digits(data.get("spread_in_points", ""), actual_digits,
                                                                   reference_digits)
 
     ws.cell(row=row_num, column=8).value = data.get("spread_in_usd_per_contract", "")

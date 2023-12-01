@@ -157,6 +157,7 @@ for column in ws.columns:
 # Retrieve broker's name from MT5 terminal info
 broker_info = terminal_info()
 broker_name = broker_info.name
+print(broker_name)
 
 # Sanitize the broker's name to ensure it's a valid filename (remove any invalid characters)
 valid_filename = re.sub(r'[\\/*?:"<>|]',"", broker_name)
