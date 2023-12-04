@@ -11,7 +11,6 @@ if not initialize():
     print("Initialization has failed")
     shutdown()
 
-
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, filename='mt5_symbols_log.txt', filemode='w',
                     format='%(name)s - %(levelname)s - %(message)s')
@@ -20,6 +19,15 @@ logging.basicConfig(level=logging.DEBUG, filename='mt5_symbols_log.txt', filemod
 broker_info = terminal_info()
 broker_name = broker_info.name
 print(broker_name)
+
+# Inout variables
+new_symbols = False
+
+# Import the appropriate mappings module
+if new_symbols:
+    import mappings_new_instruments as mappings
+else:
+    import mappings
 
 # Select the appropriate mappings based on the broker's name
 if broker_name.lower() == 'oanda metatrader 5':
