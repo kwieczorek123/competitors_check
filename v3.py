@@ -3,7 +3,6 @@ import openpyxl
 import numpy as np
 import re
 import logging
-import mappings
 
 
 # Initialize the MetaTrader 5 terminal
@@ -21,7 +20,7 @@ broker_name = broker_info.name
 print(broker_name)
 
 # Inout variables
-new_symbols = False
+new_symbols = True
 
 # Import the appropriate mappings module
 if new_symbols:
