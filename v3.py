@@ -20,7 +20,7 @@ broker_name = broker_info.name
 print(broker_name)
 
 # Inout variables
-new_symbols = True
+new_symbols = False
 
 # Import the appropriate mappings module
 if new_symbols:
