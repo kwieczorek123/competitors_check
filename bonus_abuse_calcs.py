@@ -1,13 +1,13 @@
 import pandas as pd
 
 # Given values
-equity = 1000
-leverage = 500
-stop_out_level = 0.5
+equity = 1100
+leverage = 3000
+stop_out_level = 0.4
 
 # Symbol mapping
 symbols_data = {
-    "XAUUSD": {"price": 2021, "lot_size": 100, "regular_spread": 0.21, "max_spread": 2.2},
+    "XAUUSD": {"price": 2040, "lot_size": 100, "regular_spread": 0.21, "max_spread": 2.2},
     "XAGUSD": {"price": 22.9, "lot_size": 5000, "regular_spread": 0.036, "max_spread": 0.33},
     "EURUSD": {"price": 1.084, "lot_size": 100000, "regular_spread": 0.0001, "max_spread": 0.0015},
     "GBPUSD": {"price": 1.272, "lot_size": 100000, "regular_spread": 0.0001, "max_spread": 0.0017},
@@ -59,5 +59,5 @@ for symbol, data in symbols_data.items():
 print(results_df)
 
 # Save the DataFrame to a CSV file
-csv_file_path = 'symbol_calculations_xm.csv'
+csv_file_path = 'symbol_calculations_jfg.csv'
 results_df.to_csv(csv_file_path, index=False)
