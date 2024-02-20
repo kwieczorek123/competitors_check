@@ -2,15 +2,15 @@ import pandas as pd
 
 # Given values
 equity = 1100
-leverage = 3000
-stop_out_level = 0.4
+leverage = 2000
+stop_out_level = 0.5
 
 # Symbol mapping
 symbols_data = {
-    "XAUUSD": {"price": 2040, "lot_size": 100, "regular_spread": 0.21, "max_spread": 2.2},
+    "XAUUSD": {"price": 2025, "lot_size": 100, "regular_spread": 0.3, "max_spread": 2.42},
     "XAGUSD": {"price": 22.9, "lot_size": 5000, "regular_spread": 0.036, "max_spread": 0.33},
-    "EURUSD": {"price": 1.084, "lot_size": 100000, "regular_spread": 0.0001, "max_spread": 0.0015},
-    "GBPUSD": {"price": 1.272, "lot_size": 100000, "regular_spread": 0.0001, "max_spread": 0.0017},
+    "EURUSD": {"price": 1.08, "lot_size": 100000, "regular_spread": 0.00015, "max_spread": 0.00165},
+    "GBPUSD": {"price": 1.272, "lot_size": 100000, "regular_spread": 0.0002, "max_spread": 0.0019},
     "AUDUSD": {"price": 0.659, "lot_size": 100000, "regular_spread": 0.00013, "max_spread": 0.00175},
     "NZDUSD": {"price": 0.61, "lot_size": 100000, "regular_spread": 0.00017, "max_spread": 0.0033},
     "XTIUSD": {"price": 76.5, "lot_size": 1000, "regular_spread": 0.06, "max_spread": 0.22}
@@ -59,5 +59,5 @@ for symbol, data in symbols_data.items():
 print(results_df)
 
 # Save the DataFrame to a CSV file
-csv_file_path = 'symbol_calculations_jfg.csv'
+csv_file_path = 'symbol_calculations_easy.csv'
 results_df.to_csv(csv_file_path, index=False)
