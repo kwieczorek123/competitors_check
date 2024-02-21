@@ -3,7 +3,7 @@ import pandas as pd
 # Given values
 equity = 1100
 leverage = 2000
-stop_out_level = 0.5
+stop_out_level = 0.4
 
 # Symbol mapping
 symbols_data = {
@@ -59,5 +59,5 @@ for symbol, data in symbols_data.items():
 print(results_df)
 
 # Save the DataFrame to a CSV file
-csv_file_path = 'symbol_calculations_easy.csv'
+csv_file_path = 'symbol_calculations_jfg.csv'
 results_df.to_csv(csv_file_path, index=False)
